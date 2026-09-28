@@ -3,7 +3,6 @@ package org.example.krishantutioncenter.controller;
 import org.example.krishantutioncenter.model.*;
 import org.example.krishantutioncenter.repository.*;
 import org.example.krishantutioncenter.service.*;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.CacheControl;
 import org.springframework.http.ContentDisposition;
@@ -22,7 +21,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
+import java.io.IOException;
 
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
@@ -165,11 +164,13 @@ public class MaterialController {
     }
 
     private ResponseEntity<Resource> fileResponse(LessonMaterial material) {
-        var path = storage.resolve(material.getStorageKey());
-        if (!Files.isRegularFile(path)) {
-            throw new ResponseStatusException(NOT_FOUND);
+        Resource resource;
+        try {
+            resource = storage.load(material.getStorageKey());
+        } catch (IOException exception) {
+            throw new IllegalStateException("Material storage is unavailable.", exception);
         }
-        Resource resource = new FileSystemResource(path);
+        if (resource == null) throw new ResponseStatusException(NOT_FOUND);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(material.getContentType()))
                 .contentLength(material.getSizeBytes())
