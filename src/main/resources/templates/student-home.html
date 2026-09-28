@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>My classroom — Studyroom</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+</head>
+<body class="management-page">
+<header class="management-topbar">
+    <a class="brand" th:href="@{/student}"><span class="brand-mark"><span></span><span></span><span></span><span></span></span><span>studyroom<span class="brand-period">.</span></span></a>
+    <nav><a th:href="@{/student}">My classroom</a><a th:href="@{/student/quizzes}">Quizzes</a><a th:href="@{/student/ask}">AI doubt help</a><a th:href="@{/student/messages}">Ask your tutor</a></nav>
+    <form th:action="@{/logout}" method="post"><button class="logout-button" type="submit">Log out</button></form>
+</header>
+<main class="management-content">
+    <div class="eyebrow"><span class="eyebrow-line"></span> YOUR LEARNING SPACE</div>
+    <h1>Good to see you, <span th:text="${student.displayName}">Student</span>.</h1>
+    <p class="welcome-subtitle">Here’s your class information and the materials shared with your batch.</p>
+    <section class="student-welcome-card">
+        <span class="avatar student-avatar" th:text="${#strings.substring(student.displayName, 0, 1)}">S</span>
+        <div><div class="student-batch-label">YOUR BATCH</div><h2 th:text="${student.batch.name}">Batch name</h2><p th:text="${student.batch.subject}">Subject</p></div>
+    </section>
+    <section class="management-card student-materials-card">
+        <div class="panel-heading"><div><h2>Learning materials</h2><p>Shared with your batch</p></div></div>
+        <div class="empty-state" th:if="${#lists.isEmpty(materials)}">Your tutor hasn't shared any materials yet.</div>
+        <div class="student-list" th:unless="${#lists.isEmpty(materials)}">
+            <a class="student-material-row" th:each="material : ${materials}" th:href="@{/student/materials/{id}(id=${material.id})}">
+                <span class="file-icon" th:classappend="${material.type.name() == 'NOTE' ? ' pdf-icon' : ' video-icon'}" th:text="${material.type.name() == 'NOTE' ? 'PDF' : '▶'}">PDF</span>
+                <span class="student-row-copy"><strong th:text="${material.title}">Material title</strong><small th:text="${material.type.name() + ' · ' + material.batch.subject}">NOTE</small></span>
+                <span class="student-material-arrow">→</span>
+            </a>
+        </div>
+    </section>
+    <section class="student-notice ai-student-entry">
+        <span>✳</span><div><strong>Have a question about your notes?</strong><p>Ask the notes-only AI tutor. Answers are limited to materials shared with your batch.</p><a class="student-ai-link" th:href="@{/student/ask}">Ask a question →</a></div>
+    </section>
+</main>
+</body>
+</html>

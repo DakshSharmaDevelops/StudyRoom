@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${material.title + ' — Studyroom'}">Learning material — Studyroom</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+</head>
+<body class="management-page">
+<header class="management-topbar">
+    <a class="brand" th:href="@{/student}"><span class="brand-mark"><span></span><span></span><span></span><span></span></span><span>studyroom<span class="brand-period">.</span></span></a>
+    <span class="student-header-label">MY CLASSROOM</span>
+    <form th:action="@{/logout}" method="post"><button class="logout-button" type="submit">Log out</button></form>
+</header>
+<main class="management-content">
+    <a class="back-link" th:href="@{/student}">← Back to my classroom</a>
+    <div class="eyebrow material-eyebrow"><span class="eyebrow-line"></span><span th:text="${material.batch.name + ' · ' + material.batch.subject}">Class batch</span></div>
+    <h1 th:text="${material.title}">Material title</h1>
+    <p class="welcome-subtitle" th:text="${material.originalFilename}">filename.pdf</p>
+    <div class="ai-summary-prompt" th:if="${material.type.name() == 'NOTE' and aiConfigured and #lists.isEmpty(material.tags)}">Your tutor can generate an English and Hindi summary and suggested topic tags from this note.</div>
+    <section class="material-viewer" th:if="${material.type.name() == 'VIDEO'}">
+        <video controls preload="metadata" playsinline>
+            <source th:src="@{/student/materials/{id}/file(id=${material.id})}" th:type="${material.contentType}">
+            Your browser does not support this video.
+        </video>
+    </section>
+    <section class="note-content" th:if="${material.type.name() == 'NOTE'}">
+        <div class="generated-summary" th:if="${material.aiSummaryPublished and (material.englishSummary != null or material.hindiSummary != null)}">
+            <div class="summary-heading"><span>✳ NOTES SUMMARY</span><span>Reviewed by your tutor</span></div>
+            <h2>English</h2><p th:text="${material.englishSummary}">English summary</p>
+            <h2>हिंदी</h2><p th:text="${material.hindiSummary}">Hindi summary</p>
+            <div class="tag-list"><span class="batch-chip green-chip" th:each="tag : ${material.tags}" th:text="${tag}">Topic</span></div>
+        </div>
+        <div class="note-file-toolbar"><span>NOTE CONTENT</span><a th:href="@{/student/materials/{id}/file(id=${material.id})}" target="_blank" rel="noopener">Open original file ↗</a></div>
+        <pre th:text="${material.extractedText}">Extracted note text</pre>
+    </section>
+</main>
+</body>
+</html>

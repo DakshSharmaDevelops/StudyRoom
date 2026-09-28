@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>My quizzes — Studyroom</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+</head>
+<body class="management-page">
+<header class="management-topbar">
+    <a class="brand" th:href="@{/student}"><span class="brand-mark"><span></span><span></span><span></span><span></span></span><span>studyroom<span class="brand-period">.</span></span></a>
+    <nav><a th:href="@{/student}">My classroom</a><a class="selected" th:href="@{/student/quizzes}">Quizzes</a><a th:href="@{/student/messages}">Ask your tutor</a></nav>
+    <form th:action="@{/logout}" method="post"><button class="logout-button" type="submit">Log out</button></form>
+</header>
+<main class="management-content">
+    <a class="back-link" th:href="@{/student}">← Back to my classroom</a>
+    <div class="eyebrow"><span class="eyebrow-line"></span> YOUR BATCH PRACTICE</div>
+    <h1>Ready to <span>practice?</span></h1>
+    <p class="welcome-subtitle">Your tutor's quizzes are scored automatically when you submit.</p>
+    <div class="management-card quiz-list-card">
+        <div class="empty-state" th:if="${#lists.isEmpty(quizzes)}">No quizzes have been shared with your batch yet.</div>
+        <div class="student-list" th:unless="${#lists.isEmpty(quizzes)}">
+            <a class="student-material-row" th:each="quiz : ${quizzes}" th:href="@{/student/quizzes/{id}(id=${quiz.id})}">
+                <span class="avatar quiz-avatar">✓</span><span class="student-row-copy"><strong th:text="${quiz.title}">Quiz</strong><small th:text="${quiz.topic + ' · ' + #lists.size(quiz.questions) + ' questions'}">Topic</small></span><span class="student-material-arrow">Start →</span>
+            </a>
+        </div>
+    </div>
+</main>
+</body>
+</html>

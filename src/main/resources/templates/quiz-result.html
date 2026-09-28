@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Quiz score — Studyroom</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+</head>
+<body class="management-page">
+<header class="management-topbar">
+    <a class="brand" th:href="@{/student}"><span class="brand-mark"><span></span><span></span><span></span><span></span></span><span>studyroom<span class="brand-period">.</span></span></a>
+    <nav><a th:href="@{/student}">My classroom</a><a class="selected" th:href="@{/student/quizzes}">Quizzes</a><a th:href="@{/student/messages}">Ask your tutor</a></nav>
+    <form th:action="@{/logout}" method="post"><button class="logout-button" type="submit">Log out</button></form>
+</header>
+<main class="management-content">
+    <div class="score-card">
+        <span class="placeholder-symbol">✓</span>
+        <div class="eyebrow score-eyebrow"><span class="eyebrow-line"></span> QUIZ COMPLETE</div>
+        <h1 th:text="${attempt.score + ' / ' + attempt.total}">0 / 0</h1>
+        <p class="score-percent" th:text="${#numbers.formatDecimal(attempt.score * 100.0 / attempt.total, 1, 0) + '%'}">0%</p>
+        <p class="welcome-subtitle" th:text="${attempt.quiz.title}">Quiz title</p>
+        <a class="button button-primary" th:href="@{/student/quizzes}">Back to quizzes</a>
+    </div>
+</main>
+</body>
+</html>

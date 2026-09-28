@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Notes doubt helper — Studyroom</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+</head>
+<body class="management-page">
+<header class="management-topbar">
+    <a class="brand" th:href="@{/student}"><span class="brand-mark"><span></span><span></span><span></span><span></span></span><span>studyroom<span class="brand-period">.</span></span></a>
+    <nav><a th:href="@{/student}">My classroom</a><a class="selected" th:href="@{/student/ask}">AI doubt help</a><a th:href="@{/student/messages}">Ask your tutor</a></nav>
+    <form th:action="@{/logout}" method="post"><button class="logout-button" type="submit">Log out</button></form>
+</header>
+<main class="management-content ai-ask-page">
+    <a class="back-link" th:href="@{/student}">← Back to my classroom</a>
+    <div class="eyebrow"><span class="eyebrow-line"></span> GROUNDED IN YOUR CLASS NOTES</div>
+    <h1>Let's work it <span>out.</span></h1>
+    <p class="welcome-subtitle">Ask in English or Hindi. Answers use only notes shared with <strong th:text="${student.batch.name}">your batch</strong>.</p>
+
+    <div class="ai-privacy-note"><span>✳</span><p><strong>Notes-only answers.</strong> Your question is checked against your batch's uploaded notes. When enabled, your question and matching note excerpts are sent to Google Gemini to generate an answer; no other batch's notes are included. If a note does not support an answer, the AI will say so and point you to your tutor.</p></div>
+    <div class="notice notice-error" th:if="${error}" th:text="${error}"></div>
+    <div class="ai-answer-card" th:if="${answer != null}">
+        <div class="ai-answer-heading"><span>✳</span><strong>STUDYROOM AI</strong><span>Based on your notes</span></div>
+        <div class="student-question-echo"><strong>Your question</strong><p th:text="${question}">Question</p></div>
+        <p class="ai-answer-text" th:text="${answer}">Answer</p>
+        <div class="answer-sources" th:if="${!#lists.isEmpty(sources)}"><strong>From your notes</strong><span class="batch-chip green-chip" th:each="source : ${sources}" th:text="${source}">Note</span></div>
+        <div class="answer-tutor-link" th:if="${needsTutor}">Still unsure? <a th:href="@{/student/messages}">Message your tutor privately →</a></div>
+    </div>
+
+    <section class="management-card ai-question-card" th:if="${aiUsage.available}">
+        <form class="stacked-form ai-question-form" th:action="@{/student/ask}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <label for="question">What would you like help understanding?</label>
+            <textarea id="question" name="question" maxlength="1000" rows="4" placeholder="Ask about something in your class notes… / अपनी कक्षा के नोट्स के बारे में पूछें…" required></textarea>
+            <div class="ai-question-footer"><span>English or Hindi · 1,000 characters max · Monthly AI requests: <strong th:text="${aiUsage.used + ' / ' + aiUsage.limit}">0 / 100</strong></span><button class="button button-primary" type="submit">Ask from my notes →</button></div>
+        </form>
+    </section>
+    <div class="ai-disabled-card" th:unless="${aiUsage.available}">
+        <strong th:text="${aiConfigured ? 'Monthly AI limit reached' : 'AI setup needed'}">AI setup needed</strong>
+        <p th:text="${aiConfigured ? 'The free-tier request limit has been reached. It resets next month. You can still message your tutor.' : 'The tutor has not configured the Gemini free tier yet. Message your tutor for help in the meantime.'}">AI availability</p>
+        <a class="button button-secondary" th:href="@{/student/messages}">Message your tutor</a>
+    </div>
+    <p class="ai-usage-caption" th:if="${aiConfigured}">Shared monthly free-tier request cap: <span th:text="${aiUsage.used + ' of ' + aiUsage.limit + ' requests used this month'}">0 requests used</span>. When reached, AI requests stop; no paid fallback is used.</p>
+</main>
+</body>
+</html>

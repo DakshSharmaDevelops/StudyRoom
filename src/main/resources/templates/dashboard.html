@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f8f8f5">
+    <title>Studyroom — Tutor workspace</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+        <a class="brand" href="#" aria-label="Studyroom home">
+            <span class="brand-mark"><span></span><span></span><span></span><span></span></span>
+            <span>studyroom<span class="brand-period">.</span></span>
+        </a>
+
+        <div class="workspace-label">WORKSPACE</div>
+        <nav class="main-nav" aria-label="Main navigation">
+            <button class="nav-link active" data-view="overview"><span class="nav-icon icon-grid"></span>Overview</button>
+            <a class="nav-link" th:href="@{/admin/students}"><span class="nav-icon icon-people"></span>Students<span class="nav-count" th:text="${studentCount}">0</span></a>
+            <a class="nav-link" th:href="@{/admin/library}"><span class="nav-icon icon-book"></span>Learning library</a>
+            <a class="nav-link" th:href="@{/admin/quizzes}"><span class="nav-icon icon-check"></span>Quizzes</a>
+            <a class="nav-link" th:href="@{/admin/messages}"><span class="nav-icon icon-chat"></span>Messages</a>
+        </nav>
+
+        <div class="sidebar-batch">
+            <div class="workspace-label">YOUR BATCHES <button class="tiny-plus" aria-label="Add batch">+</button></div>
+            <a class="batch-link" th:each="batch : ${batches}" th:href="@{/admin/batches}"><span class="batch-color batch-purple"></span><span th:text="${batch.name + ' · ' + batch.subject}">Batch</span></a>
+            <a class="batch-link" th:if="${#lists.isEmpty(batches)}" th:href="@{/admin/batches}">+ Create your first batch</a>
+            <a class="batch-link" th:href="@{/admin/batches}">＋ Manage batches</a>
+        </div>
+
+        <div class="sidebar-bottom">
+            <div class="storage-card">
+                <div class="storage-heading"><span>File storage</span><span>Local</span></div>
+                <div class="storage-caption">Private files stored on this server</div>
+            </div>
+            <button class="profile-button">
+                <span class="avatar avatar-teacher" th:text="${#strings.substring(teacherName, 0, 1)}">T</span>
+                <span class="profile-copy"><strong th:text="${teacherName}">Teacher</strong><small>Administrator</small></span>
+                <form th:action="@{/logout}" method="post"><button class="logout-button" type="submit">Log out</button></form>
+            </button>
+        </div>
+    </aside>
+
+    <main class="main-area">
+        <header class="topbar">
+            <button class="mobile-menu" id="mobile-menu" aria-label="Open navigation">☰</button>
+            <div class="breadcrumb"><span>Workspace</span><span class="crumb-slash">/</span><strong id="breadcrumb-current">Overview</strong></div>
+            <div class="topbar-actions">
+                <span class="preview-pill"><i></i><span th:text="${aiConfigured ? 'AI ready' : 'AI setup needed'}">AI setup needed</span></span>
+                <button class="icon-button notification-button" aria-label="Notifications">♧<i></i></button>
+                <button class="help-button">Help center <span>↗</span></button>
+            </div>
+        </header>
+
+        <div class="page-wrap">
+            <section class="view-panel active" id="view-overview">
+                <div class="welcome-row">
+                    <div>
+                        <div class="eyebrow"><span class="eyebrow-line"></span> MONDAY, 28 SEPTEMBER 2026</div>
+                        <h1>A good day to <span>teach.</span></h1>
+                        <p class="welcome-subtitle">Here’s what’s happening in your classroom today.</p>
+                    </div>
+                    <div class="welcome-actions">
+                        <a class="button button-secondary" th:href="@{/admin/students}"><span>＋</span> Add student</a>
+                        <a class="button button-primary" th:href="@{/admin/library}"><span>↑</span> Add material</a>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <article class="stat-card">
+                        <div class="stat-top"><span>Active students</span><span class="stat-icon icon-people pale-purple"></span></div>
+                        <div class="stat-value" th:text="${studentCount}">0</div>
+                        <div class="stat-footer">Across <strong th:text="${#lists.size(batches) + ' active batches'}">0 active batches</strong></div>
+                    </article>
+                    <article class="stat-card">
+                        <div class="stat-top"><span>Learning materials</span><span class="stat-icon icon-book pale-blue"></span></div>
+                        <div class="stat-value" th:text="${materialCount}">0</div>
+                        <div class="stat-footer"><strong th:text="${noteCount + ' notes'}">0 notes</strong> · <span th:text="${videoCount + ' videos'}">0 videos</span></div>
+                    </article>
+                    <article class="stat-card">
+                        <div class="stat-top"><span>Questions to answer</span><span class="stat-icon icon-chat pale-orange"></span></div>
+                        <div class="stat-value">—</div>
+                        <div class="stat-footer">Private messages are coming soon</div>
+                    </article>
+                    <article class="stat-card">
+                        <div class="stat-top"><span>Quiz average</span><span class="stat-icon icon-check pale-green"></span></div>
+                        <div class="stat-value">—</div>
+                        <div class="stat-footer"><strong th:text="${quizCount + ' published quizzes'}">0 published quizzes</strong></div>
+                    </article>
+                </div>
+
+                <div class="content-grid">
+                    <section class="panel activity-panel">
+                        <div class="panel-heading">
+                            <div><h2>Classroom activity</h2><p>A little progress adds up.</p></div>
+                            <button class="period-select">This week <span>⌄</span></button>
+                        </div>
+                        <div class="chart-summary"><strong>—</strong><span>quiz activity will appear here</span></div>
+                        <div class="activity-chart" aria-label="Weekly activity chart">
+                            <div class="chart-y-labels"><span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0%</span></div>
+                            <div class="chart-plot">
+                                <div class="chart-gridline line-100"></div><div class="chart-gridline line-75"></div><div class="chart-gridline line-50"></div><div class="chart-gridline line-25"></div>
+                                <div class="chart-bars">
+                                    <div class="bar-group"><span class="bar bar-previous" style="height:0"></span><span class="bar bar-current" style="height:0"></span><small>Mon</small></div>
+                                    <div class="bar-group"><span class="bar bar-previous" style="height:0"></span><span class="bar bar-current" style="height:0"></span><small>Tue</small></div>
+                                    <div class="bar-group"><span class="bar bar-previous" style="height:0"></span><span class="bar bar-current" style="height:0"></span><small>Wed</small></div>
+                                    <div class="bar-group"><span class="bar bar-previous" style="height:0"></span><span class="bar bar-current" style="height:0"></span><small>Thu</small></div>
+                                    <div class="bar-group"><span class="bar bar-previous" style="height:0"></span><span class="bar bar-current" style="height:0"></span><small>Fri</small></div>
+                                    <div class="bar-group"><span class="bar bar-previous" style="height:0"></span><span class="bar bar-current" style="height:0"></span><small>Sat</small></div>
+                                    <div class="bar-group"><span class="bar bar-previous" style="height:0"></span><span class="bar bar-current" style="height:0"></span><small>Sun</small></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chart-legend"><span><i class="legend-dot current-dot"></i>This week</span><span><i class="legend-dot previous-dot"></i>Last week</span></div>
+                    </section>
+
+                    <section class="panel schedule-panel">
+                        <div class="panel-heading">
+                            <div><h2>Your batches</h2><p>Students organized by subject</p></div>
+                            <a class="text-link" th:href="@{/admin/batches}">Manage batches <span>→</span></a>
+                        </div>
+                        <div class="class-list">
+                            <div class="class-item" th:each="batch : ${batches}"><span class="class-marker marker-purple"></span><span class="class-detail"><strong th:text="${batch.name}">Batch</strong><small th:text="${batch.subject}">Subject</small></span><span class="class-duration" th:text="${batchStudentCounts[batch.id] + ' students'}">0 students</span></div>
+                            <div class="empty-state" th:if="${#lists.isEmpty(batches)}">Create a batch to start organizing your students.</div>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="content-grid lower-grid">
+                    <section class="panel materials-panel">
+                        <div class="panel-heading">
+                            <div><h2>Recently shared</h2><p>Materials your students can access</p></div>
+                            <a class="text-link" th:href="@{/admin/library}">View library <span>→</span></a>
+                        </div>
+                        <div class="materials-table">
+                            <div class="table-head"><span>NAME</span><span>BATCH</span><span>SHARED</span><span>TYPE</span><span></span></div>
+                            <a class="material-row material-row-link" th:each="material : ${recentMaterials}" th:href="@{/admin/library/{id}/file(id=${material.id})}">
+                                <span class="material-name"><i class="file-icon" th:classappend="${material.type.name() == 'NOTE' ? ' pdf-icon' : ' video-icon'}" th:text="${material.type.name() == 'NOTE' ? 'PDF' : '▶'}">PDF</i><span><strong th:text="${material.title}">Material title</strong><small th:text="${material.originalFilename}">file.pdf</small></span></span>
+                                <span class="batch-chip purple-chip" th:text="${material.batch.name}">Batch</span>
+                                <span class="muted-cell" th:text="${#temporals.format(material.createdAt, 'MMM d')}">Shared</span>
+                                <span class="type-tag" th:text="${material.type}">NOTE</span><span></span>
+                            </a>
+                            <div class="empty-state" th:if="${#lists.isEmpty(recentMaterials)}">Your recently shared materials will show up here.</div>
+                        </div>
+                    </section>
+
+                    <section class="ai-card">
+                        <div class="ai-card-top"><span class="ai-spark">✳</span><span class="ai-label">YOUR AI TEACHING ASSISTANT</span><span class="coming-soon" th:text="${aiConfigured ? 'FREE TIER' : 'SETUP NEEDED'}">SETUP NEEDED</span></div>
+                        <h2>Turn your notes into<br><em>something more.</em></h2>
+                        <p>Summaries, topic tags and a doubt resolver grounded only in your own class notes.</p>
+                        <div class="ai-capabilities"><span>✦ English &amp; Hindi</span><span>✦ Notes-only answers</span><span>✦ Free-tier limit</span></div>
+                        <a class="ai-button ai-button-link" th:if="${aiConfigured}" th:href="@{/admin/library}">Generate summaries from the library <span>→</span></a>
+                        <span class="ai-button" th:unless="${aiConfigured}">Set up the Gemini free tier to enable AI <span>→</span></span>
+                        <div class="ai-footnote" th:text="${'Monthly AI requests: ' + aiUsage.used + ' / ' + aiUsage.limit + ' · Batch-note-only answers · No paid fallback'}">AI quota</div>
+                    </section>
+                </div>
+            </section>
+
+            <section class="view-panel placeholder-panel" id="view-students">
+                <div class="eyebrow"><span class="eyebrow-line"></span> YOUR CLASSROOM</div><h1>Students <span>make it count.</span></h1>
+                <p class="welcome-subtitle">Keep your batches and student accounts in one place.</p>
+                <div class="placeholder-card"><span class="placeholder-symbol">♧</span><h2>Your students, at a glance.</h2><p>Student accounts are created by you and organized into batches.</p><a class="button button-primary" th:href="@{/admin/students}">＋ Manage students</a></div>
+            </section>
+
+            <section class="view-panel placeholder-panel" id="view-library">
+                <div class="eyebrow"><span class="eyebrow-line"></span> TEACHING MATERIALS</div><h1>Your learning <span>library.</span></h1>
+                <p class="welcome-subtitle">Notes, lesson videos and practice quizzes, organized by batch and topic.</p>
+                <div class="placeholder-card"><span class="placeholder-symbol">▤</span><h2>A home for everything you teach.</h2><p>Share batch-specific PDF and text notes or MP4 and WebM lesson videos. Notes are extracted for the planned notes-grounded AI features.</p><a class="button button-primary" th:href="@{/admin/library}">↑ Open learning library</a></div>
+            </section>
+
+            <section class="view-panel placeholder-panel" id="view-quizzes">
+                <div class="eyebrow"><span class="eyebrow-line"></span> CHECK FOR UNDERSTANDING</div><h1>Small quizzes, <span>big progress.</span></h1>
+                <p class="welcome-subtitle">Build multiple-choice quizzes and let students see their scores right away.</p>
+                <div class="placeholder-card"><span class="placeholder-symbol">✓</span><h2>Practice that gives instant feedback.</h2><p>Quiz creation and automatic scoring will be enabled as the classroom data layer is added.</p><button class="button button-primary" data-action="add-resource">＋ Create a quiz</button></div>
+            </section>
+
+            <section class="view-panel placeholder-panel" id="view-messages">
+                <div class="eyebrow"><span class="eyebrow-line"></span> ONE-TO-ONE SUPPORT</div><h1>Every question <span>matters.</span></h1>
+                <p class="welcome-subtitle">Private conversations between you and each student.</p>
+                <div class="placeholder-card"><span class="placeholder-symbol">↗</span><h2>Your student inbox.</h2><p>Private messaging will be available once accounts and conversations are backed by the app.</p></div>
+            </section>
+        </div>
+    </main>
+</div>
+
+<div class="modal-backdrop" id="modal-backdrop" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <button class="modal-close" id="modal-close" aria-label="Close dialog">×</button>
+        <div class="modal-kicker">STUDYROOM PREVIEW</div>
+        <h2 id="modal-title">Coming in the next build</h2>
+        <p id="modal-copy">This preview shows the planned workflow. Student accounts and uploads will be saved securely once the backend is connected.</p>
+        <button class="button button-primary modal-ok" id="modal-ok">Got it</button>
+    </section>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script th:src="@{/js/dashboard.js}" defer></script>
+</body>
+</html>
