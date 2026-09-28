@@ -5,6 +5,10 @@ import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,6 +22,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.UUID;
+import java.net.URI;
+
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3Configuration;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 @Service
 public class MaterialStorageService {
@@ -27,9 +42,44 @@ public class MaterialStorageService {
     private static final int MAX_EXTRACTED_CHARS = 200_000;
 
     private final Path storageRoot;
+    private final S3Client objectStorage;
+    private final String bucket;
+    private final long maxVideoBytes;
 
     public MaterialStorageService(@Value("${app.upload-dir:./data/uploads}") String uploadDirectory) {
         this.storageRoot = Path.of(uploadDirectory).toAbsolutePath().normalize();
+        this.objectStorage = null;
+        this.bucket = null;
+        this.maxVideoBytes = MAX_VIDEO_BYTES;
+    }
+
+    @Autowired
+    public MaterialStorageService(@Value("${app.upload-dir:./data/uploads}") String uploadDirectory,
+                                  @Value("${app.storage.endpoint:}") String endpoint,
+                                  @Value("${app.storage.region:us-east-1}") String region,
+                                  @Value("${app.storage.bucket:}") String bucket,
+                                  @Value("${app.storage.access-key:}") String accessKey,
+                                  @Value("${app.storage.secret-key:}") String secretKey,
+                                  @Value("${app.video-max-bytes:524288000}") long maxVideoBytes) {
+        this.storageRoot = Path.of(uploadDirectory).toAbsolutePath().normalize();
+        boolean configured = !endpoint.isBlank() && !bucket.isBlank()
+                && !accessKey.isBlank() && !secretKey.isBlank();
+        if (!configured && (!endpoint.isBlank() || !bucket.isBlank()
+                || !accessKey.isBlank() || !secretKey.isBlank())) {
+            throw new IllegalStateException("All object storage settings must be configured together.");
+        }
+        this.bucket = configured ? bucket : null;
+        if (maxVideoBytes <= 0 || maxVideoBytes > MAX_VIDEO_BYTES) {
+            throw new IllegalArgumentException("Video upload limit must be between 1 byte and 500 MB.");
+        }
+        this.maxVideoBytes = maxVideoBytes;
+        this.objectStorage = configured ? S3Client.builder()
+                .endpointOverride(URI.create(endpoint))
+                .region(Region.of(region))
+                .credentialsProvider(StaticCredentialsProvider.create(
+                        AwsBasicCredentials.create(accessKey, secretKey)))
+                .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build())
+                .build() : null;
     }
 
     public StoredMaterial store(MultipartFile file, MaterialType type) throws IOException {
@@ -52,8 +102,9 @@ public class MaterialStorageService {
             save(file, key);
             return new StoredMaterial(originalFilename, contentTypeForNote(extension), key, size, extractedText);
         }
-        if (size > MAX_VIDEO_BYTES) {
-            throw new IllegalArgumentException("Videos must be 500 MB or smaller.");
+        if (size > maxVideoBytes) {
+            throw new IllegalArgumentException("Video exceeds the configured upload limit ("
+                    + (maxVideoBytes / (1024 * 1024)) + " MB).");
         }
         String expectedType = switch (extension) {
             case "mp4" -> "video/mp4";
@@ -86,6 +137,22 @@ public class MaterialStorageService {
             throw new IllegalArgumentException("Invalid stored file key.");
         }
         return resolved;
+    }
+
+    public Resource load(String storageKey) throws IOException {
+        if (!storageKey.matches("[0-9a-fA-F-]{36}\\.(pdf|txt|mp4|webm)")) {
+            throw new IllegalArgumentException("Invalid stored file key.");
+        }
+        if (objectStorage != null) {
+            try {
+                return new InputStreamResource(objectStorage.getObject(
+                        GetObjectRequest.builder().bucket(bucket).key(storageKey).build()));
+            } catch (NoSuchKeyException exception) {
+                return null;
+            }
+        }
+        Path path = resolve(storageKey);
+        return Files.isRegularFile(path) ? new FileSystemResource(path) : null;
     }
 
     private String extractNote(MultipartFile file, String extension) throws IOException {
@@ -145,6 +212,15 @@ public class MaterialStorageService {
     }
 
     private void save(MultipartFile file, String storageKey) throws IOException {
+        if (objectStorage != null) {
+            try (var input = file.getInputStream()) {
+                objectStorage.putObject(PutObjectRequest.builder().bucket(bucket).key(storageKey)
+                                .contentType(file.getContentType() == null
+                                        ? "application/octet-stream" : file.getContentType()).build(),
+                        RequestBody.fromInputStream(input, file.getSize()));
+            }
+            return;
+        }
         Files.createDirectories(storageRoot);
         Path target = resolve(storageKey);
         try (var input = file.getInputStream()) {
